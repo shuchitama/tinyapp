@@ -28,6 +28,19 @@ const urlDatabase = {
   "yHq36q": "https://developer.mozilla.org/en-US"
 };
 
+const users = {
+  "userRandomID": {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur"
+  },
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
+  }
+}
+
 // Display all short and long URLs in a table with EDIT and DELETE options
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlDatabase, username: req.cookies["username"] };
@@ -96,6 +109,15 @@ app.post("/logout", (req, res) => {
 app.get("/register", (req, res) => {
   let templateVars = { username: req.cookies["username"] };
   res.render("registration", templateVars);
+})
+
+// Handle new registations
+app.post("/register", (req, res) => {
+  const randomID = generateRandomString();
+  users[randomID] = { id: randomID, email: req.body.email, password: req.body.password };
+  res.cookie("username", randomID);
+  console.log(users);
+  res.redirect("/urls")
 })
 
 app.listen(PORT, () => {
