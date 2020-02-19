@@ -19,7 +19,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "9sm5xK": "http://www.google.com",
+  "idFhed": "http://www.example.com",
+  "GvswhG": "https://www.youtube.com/?tab=w1&gl=CA",
+  "O7QJXg": "https://www.wikipedia.org/",
+  "0fhTa2": "https://9gag.com/",
+  "yHq36q": "https://developer.mozilla.org/en-US/"
 };
 
 app.get("/", (req, res) => {
@@ -74,6 +79,17 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[key];
   res.redirect("/urls");
 });
+
+app.post("/urls/:shortURL", (req, res) => {
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  res.render("urls_show", templateVars);
+});
+
+app.post("/urls/:shortURL/edit", (req, res) => {
+  let key = req.params.shortURL;
+  urlDatabase[key] = req.body.edit;
+  res.redirect("/urls");
+})
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
