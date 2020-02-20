@@ -74,11 +74,11 @@ const emailLookup = function (userID, users) {
   }
 };
 
-const filterURLsByUser = function (user_ID, obj) {
+const urlsForUser = function (user_ID) {
   let filteredDatabase = {};
-  for (const key in obj) {
-    if (obj[key]['userID'] === user_ID) {
-      filteredDatabase[key] = obj[key];
+  for (const key in urlDatabase) {
+    if (urlDatabase[key]['userID'] === user_ID) {
+      filteredDatabase[key] = urlDatabase[key];
     }
   }
   return filteredDatabase;
@@ -90,10 +90,14 @@ const filterURLsByUser = function (user_ID, obj) {
 app.get("/urls", (req, res) => {
   let templateVars = {
     user_ID: req.cookies['user_ID'],
-    urls: filterURLsByUser(req.cookies['user_ID'], urlDatabase),
+    urls: urlsForUser(req.cookies['user_ID'], urlDatabase),
     email: emailLookup(req.cookies['user_ID'], users)
   };
-  res.render("urls_index", templateVars);
+  if (req.cookies['user_ID']) {
+    res.render("urls_index", templateVars);
+  } else {
+    res.render("please_log_in", templateVars);
+  }
 });
 
 // Display page that allows creation of new short URL if logged in
@@ -122,7 +126,11 @@ app.get("/urls/:shortURL", (req, res) => {
     user_ID: req.cookies['user_ID'],
     email: emailLookup(req.cookies['user_ID'], users)
   };
-  res.render("urls_show", templateVars);
+  if (req.cookies['user_ID']) {
+    res.render("urls_show", templateVars);
+  } else {
+    res.render("please_log_in", templateVars);
+  }
 });
 
 // Redirect to long URL by clicking on the short URL
@@ -133,9 +141,18 @@ app.get(`/u/:shortURL`, (req, res) => {
 
 // Delete a short URL
 app.post("/urls/:shortURL/delete", (req, res) => {
-  let key = req.params.shortURL
-  delete urlDatabase[key];
-  res.redirect("/urls");
+  let templateVars = {
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL]['longURL'],
+    user_ID: req.cookies['user_ID'],
+    email: emailLookup(req.cookies['user_ID'], users)
+  };
+  if (req.cookies['user_ID']) {
+    delete urlDatabase[shortURL];
+    res.redirect("/urls");
+  } else {
+    res.render("please_log_in", templateVars)
+  }
 });
 
 // Pressing the "EDIT" button on index page -> redirects to edit page
