@@ -72,14 +72,25 @@ const emailLookup = function (userID, users) {
       return users[user]['email'];
     }
   }
-}
+};
+
+const filterURLsByUser = function (user_ID, obj) {
+  let filteredDatabase = {};
+  for (const key in obj) {
+    if (obj[key]['userID'] === user_ID) {
+      filteredDatabase[key] = obj[key];
+    }
+  }
+  return filteredDatabase;
+};
 //---------------------------------------------------------//
 
 // Display all short and long URLs in a table with EDIT and DELETE options
+// Only if a user is logged in, and only with the shortURL the user created
 app.get("/urls", (req, res) => {
   let templateVars = {
-    urls: urlDatabase,
     user_ID: req.cookies['user_ID'],
+    urls: filterURLsByUser(req.cookies['user_ID'], urlDatabase),
     email: emailLookup(req.cookies['user_ID'], users)
   };
   res.render("urls_index", templateVars);
@@ -111,8 +122,6 @@ app.get("/urls/:shortURL", (req, res) => {
     user_ID: req.cookies['user_ID'],
     email: emailLookup(req.cookies['user_ID'], users)
   };
-  // console.log(templateVars.shortURL)
-  // console.log(templateVars.longURL);
   res.render("urls_show", templateVars);
 });
 
