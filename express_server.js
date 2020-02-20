@@ -49,14 +49,6 @@ const emailExists = function (email, users) {
   return false;
 };
 
-const userIDLookup = function (email, users) {
-  for (const user in users) {
-    if (users[user]['email'] === email) {
-      return user;
-    }
-  }
-};
-
 const passwordCorrect = function (email, password, users) {
   for (const user in users) {
     if (users[user]['email'] === email && users[user]['password'] === password) {
@@ -66,15 +58,36 @@ const passwordCorrect = function (email, password, users) {
   return false;
 }
 
+const userIDLookup = function (email, users) {
+  for (const user in users) {
+    if (users[user]['email'] === email) {
+      return user;
+    }
+  }
+};
+
+const emailLookup = function (userID, users) {
+  for (const user in users) {
+    if (user === userID) {
+      return users[user]['email'];
+    }
+  }
+}
+
+
 // Display all short and long URLs in a table with EDIT and DELETE options
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase, user_ID: req.cookies['user_ID'] };
+  let templateVars = {
+    urls: urlDatabase,
+    user_ID: req.cookies['user_ID'],
+    email: emailLookup(req.cookies['user_ID'], users)
+  };
   res.render("urls_index", templateVars);
 });
 
 // Display page that allows creation of new short URL
 app.get("/urls/new", (req, res) => {
-  let templateVars = { user_ID: req.cookies['user_ID'] };
+  let templateVars = { user_ID: req.cookies['user_ID'], email: emailLookup(req.cookies['user_ID'], users) };
   res.render("urls_new", templateVars);
 });
 
@@ -88,7 +101,12 @@ app.post("/urls", (req, res) => {
 
 // Displays page that shows short and long URL, with an Edit field
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user_ID: req.cookies['user_ID'] };
+  let templateVars = {
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL],
+    user_ID: req.cookies['user_ID'],
+    email: emailLookup(req.cookies['user_ID'], users)
+  };
   res.render("urls_show", templateVars);
 });
 
@@ -107,7 +125,12 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 // Pressing the "EDIT" button on index page -> redirects to edit page
 app.post("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user_ID: req.cookies['user_ID'] };
+  let templateVars = {
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL],
+    user_ID: req.cookies['user_ID'],
+    email: emailLookup(req.cookies['user_ID'], users)
+  };
   res.render("urls_show", templateVars);
 });
 
@@ -120,7 +143,9 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 
 // login page
 app.get("/login", (req, res) => {
-  let templateVars = { user_ID: req.cookies['user_ID'] };
+  // let userID = req.cookies['user_ID'];
+  // let userEmail = emailLookup(userID, users)
+  let templateVars = { user_ID: req.cookies['user_ID'], email: emailLookup(req.cookies['user_ID'], users) };
   res.render("login", templateVars);
 })
 
@@ -155,7 +180,7 @@ app.post("/logout", (req, res) => {
 
 // Registration page
 app.get("/register", (req, res) => {
-  let templateVars = { user_ID: req.cookies['user_ID'] };
+  let templateVars = { user_ID: req.cookies['user_ID'], email: emailLookup(req.cookies['user_ID'], users) };
   res.render("registration", templateVars);
 })
 
