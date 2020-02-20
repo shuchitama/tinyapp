@@ -4,6 +4,15 @@ const PORT = 8080;
 const cookies = require('cookie-session');
 const bodyParser = require("body-parser");
 const bcrypt = require('bcrypt');
+const {
+  emailLookup,
+  generateRandomString,
+  emailExists,
+  passwordCorrect,
+  userIDLookup,
+  urlsForUser,
+  deleteShortURL
+} = require('./helpers')
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookies({
@@ -21,16 +30,6 @@ const urlDatabase = {
   'yHq36q': { longURL: 'https://developer.mozilla.org/en-US', userID: 'YwEdhe' }
 }
 
-// const urlDatabase = {
-//   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "userRandomID" },
-//   "9sm5xK": { longURL: "http://www.google.com", userID: "userRandomID" },
-//   "idFhed": { longURL: "http://www.example.com", userID: "user2RandomID" },
-//   "GvswhG": { longURL: "https://www.youtube.com", userID: "userRandomID" },
-//   "O7QJXg": { longURL: "https://www.wikipedia.org", userID: "user2RandomID" },
-//   "0fhTa2": { longURL: "https://9gag.com", userID: "user2RandomID" },
-//   "yHq36q": { longURL: "https://developer.mozilla.org/en-US", userID: "user2RandomID" }
-// };
-
 let users = {
   YwEdhe: {
     id: 'YwEdhe',
@@ -45,71 +44,6 @@ let users = {
   }
 }
 
-// ----------------functions --------------------//
-const generateRandomString = function () {
-  let result = '';
-  let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let charactersLength = characters.length;
-  for (let i = 0; i < 6; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
-}
-
-const emailExists = function (email, users) {
-  for (const user in users) {
-    if (users[user]['email'] === email) {
-      return true;
-    }
-  }
-  return false;
-};
-
-const passwordCorrect = function (email, password, users) {
-  for (const user in users) {
-    if (users[user]['email'] === email &&
-      bcrypt.compareSync(password, users[user]['password'])) {
-      return true;
-    }
-  }
-  return false;
-}
-
-const userIDLookup = function (email, users) {
-  for (const user in users) {
-    if (users[user]['email'] === email) {
-      return user;
-    }
-  }
-};
-
-const emailLookup = function (userID, users) {
-  for (const user in users) {
-    if (user === userID) {
-      return users[user]['email'];
-    }
-  }
-};
-
-const urlsForUser = function (user_ID) {
-  let filteredDatabase = {};
-  for (const key in urlDatabase) {
-    if (urlDatabase[key]['userID'] === user_ID) {
-      filteredDatabase[key] = urlDatabase[key];
-    }
-  }
-  return filteredDatabase;
-};
-
-const deleteShortURL = function (user_ID, shortURL) {
-  for (const key in urlDatabase) {
-    if (urlDatabase[key]['userID'] === user_ID &&
-      key === shortURL) {
-      delete urlDatabase[key];
-    }
-  }
-}
-//---------------------------------------------------------//
 
 // Display all short and long URLs in a table with EDIT and DELETE options
 // Only if a user is logged in, and only with the shortURL the user created
@@ -174,7 +108,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     email: emailLookup(req.session.user_ID, users)
   };
   if (req.session.user_ID) {
-    deleteShortURL(req.session.user_ID, req.params.shortURL);
+    deleteShortURL(req.session.user_ID, req.params.shortURL, urlDatabase);
     res.redirect("/urls");
   } else {
     res.render("please_log_in", templateVars)
