@@ -12,28 +12,39 @@ app.use(cookies({
 }));
 
 const urlDatabase = {
-  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "userRandomID" },
-  "9sm5xK": { longURL: "http://www.google.com", userID: "userRandomID" },
-  "idFhed": { longURL: "http://www.example.com", userID: "user2RandomID" },
-  "GvswhG": { longURL: "https://www.youtube.com", userID: "userRandomID" },
-  "O7QJXg": { longURL: "https://www.wikipedia.org", userID: "user2RandomID" },
-  "0fhTa2": { longURL: "https://9gag.com", userID: "user2RandomID" },
-  "yHq36q": { longURL: "https://developer.mozilla.org/en-US", userID: "user2RandomID" }
-};
+  'b2xVn2': { longURL: 'http://www.lighthouselabs.ca', userID: 'eNH4Ui' },
+  '9sm5xK': { longURL: 'http://www.google.com', userID: 'eNH4Ui' },
+  'idFhed': { longURL: 'http://www.example.com', userID: 'YwEdhe' },
+  'GvswhG': { longURL: 'https://www.youtube.com', userID: 'eNH4Ui' },
+  'O7QJXg': { longURL: 'https://www.wikipedia.org', userID: 'YwEdhe' },
+  '0fhTa2': { longURL: 'https://9gag.com', userID: 'YwEdhe' },
+  'yHq36q': { longURL: 'https://developer.mozilla.org/en-US', userID: 'YwEdhe' }
+}
 
-let users = {}
-// let users = {
-//   "userRandomID": {
-//     id: "userRandomID",
-//     email: "user@example.com",
-//     password: "purple-monkey-dinosaur"
-//   },
-//   "user2RandomID": {
-//     id: "user2RandomID",
-//     email: "user2@example.com",
-//     password: "dishwasher-funk"
-//   }
-// }
+// const urlDatabase = {
+//   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "userRandomID" },
+//   "9sm5xK": { longURL: "http://www.google.com", userID: "userRandomID" },
+//   "idFhed": { longURL: "http://www.example.com", userID: "user2RandomID" },
+//   "GvswhG": { longURL: "https://www.youtube.com", userID: "userRandomID" },
+//   "O7QJXg": { longURL: "https://www.wikipedia.org", userID: "user2RandomID" },
+//   "0fhTa2": { longURL: "https://9gag.com", userID: "user2RandomID" },
+//   "yHq36q": { longURL: "https://developer.mozilla.org/en-US", userID: "user2RandomID" }
+// };
+
+let users = {
+  YwEdhe: {
+    id: 'YwEdhe',
+    email: 'user2@example.com',
+    password: '$2b$10$xbJR6rB1Yycjv2bfwLuv5u4lcDGWdQ8W1wvZnRUo8ylNPMhTuva7e'
+  },
+
+  eNH4Ui: {
+    id: 'eNH4Ui',
+    email: 'user@example.com',
+    password: '$2b$10$1.z2AV0HP5QBDu8a5LnBgOjg9Blw7Ia4BIOARzWDF.GhACooi77XO'
+  }
+}
+
 // ----------------functions --------------------//
 const generateRandomString = function () {
   let result = '';
@@ -89,6 +100,15 @@ const urlsForUser = function (user_ID) {
   }
   return filteredDatabase;
 };
+
+const deleteShortURL = function (user_ID, shortURL) {
+  for (const key in urlDatabase) {
+    if (urlDatabase[key]['userID'] === user_ID &&
+      key === shortURL) {
+      delete urlDatabase[key];
+    }
+  }
+}
 //---------------------------------------------------------//
 
 // Display all short and long URLs in a table with EDIT and DELETE options
@@ -154,7 +174,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     email: emailLookup(req.session.user_ID, users)
   };
   if (req.session.user_ID) {
-    delete urlDatabase[shortURL];
+    deleteShortURL(req.session.user_ID, req.params.shortURL);
     res.redirect("/urls");
   } else {
     res.render("please_log_in", templateVars)
@@ -181,8 +201,6 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 
 // login page
 app.get("/login", (req, res) => {
-  // let userID = req.session.user_ID;
-  // let userEmail = emailLookup(userID, users)
   let templateVars = { user_ID: req.session.user_ID, email: emailLookup(req.session.user_ID, users) };
   res.render("login", templateVars);
 })
@@ -200,7 +218,6 @@ app.post("/login", (req, res) => {
       if (emailExists(req.body.email, users) &&
         !passwordCorrect(req.body.email, req.body.password, users)) {
         res.statusCode = 403;
-        console.log(users)
         res.send("Incorrect password! Please try again.");
       } else {
         if (emailExists(req.body.email, users) &&
