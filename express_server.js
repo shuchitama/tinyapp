@@ -29,7 +29,7 @@ let users = {
     password: "dishwasher-funk"
   }
 }
-
+// ----------------functions --------------------//
 const generateRandomString = function () {
   let result = '';
   let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -73,7 +73,7 @@ const emailLookup = function (userID, users) {
     }
   }
 }
-
+//---------------------------------------------------------//
 
 // Display all short and long URLs in a table with EDIT and DELETE options
 app.get("/urls", (req, res) => {
@@ -85,10 +85,14 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-// Display page that allows creation of new short URL
+// Display page that allows creation of new short URL if logged in
 app.get("/urls/new", (req, res) => {
   let templateVars = { user_ID: req.cookies['user_ID'], email: emailLookup(req.cookies['user_ID'], users) };
-  res.render("urls_new", templateVars);
+  if (templateVars.user_ID) {
+    res.render("urls_new", templateVars);
+  } else {
+    res.render("login", templateVars);
+  }
 });
 
 // creates a new short URL and redirects to page showing short and long URL
