@@ -1,12 +1,15 @@
 const express = require('express');
 const app = express();
 const PORT = 8080;
-const cookies = require('cookie-parser');
+const cookies = require('cookie-session');
 const bodyParser = require("body-parser");
 const bcrypt = require('bcrypt');
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookies());
+app.use(cookies({
+  name: 'session',
+  keys: ["nasdylksdfkaf"]
+}));
 
 const urlDatabase = {
   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "userRandomID" },
@@ -92,11 +95,11 @@ const urlsForUser = function (user_ID) {
 // Only if a user is logged in, and only with the shortURL the user created
 app.get("/urls", (req, res) => {
   let templateVars = {
-    user_ID: req.cookies['user_ID'],
-    urls: urlsForUser(req.cookies['user_ID'], urlDatabase),
-    email: emailLookup(req.cookies['user_ID'], users)
+    user_ID: req.session.user_ID,
+    urls: urlsForUser(req.session.user_ID, urlDatabase),
+    email: emailLookup(req.session.user_ID, users)
   };
-  if (req.cookies['user_ID']) {
+  if (req.session.user_ID) {
     res.render("urls_index", templateVars);
   } else {
     res.render("please_log_in", templateVars);
@@ -105,7 +108,7 @@ app.get("/urls", (req, res) => {
 
 // Display page that allows creation of new short URL if logged in
 app.get("/urls/new", (req, res) => {
-  let templateVars = { user_ID: req.cookies['user_ID'], email: emailLookup(req.cookies['user_ID'], users) };
+  let templateVars = { user_ID: req.session.user_ID, email: emailLookup(req.session.user_ID, users) };
   if (templateVars.user_ID) {
     res.render("urls_new", templateVars);
   } else {
@@ -117,7 +120,7 @@ app.get("/urls/new", (req, res) => {
 app.post("/urls", (req, res) => {
   shortURL = generateRandomString();
   longURL = req.body.longURL;
-  urlDatabase[shortURL] = { longURL, 'userID': req.cookies['user_ID'] };
+  urlDatabase[shortURL] = { longURL, 'userID': req.session.user_ID };
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -126,10 +129,10 @@ app.get("/urls/:shortURL", (req, res) => {
   let templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL]['longURL'],
-    user_ID: req.cookies['user_ID'],
-    email: emailLookup(req.cookies['user_ID'], users)
+    user_ID: req.session.user_ID,
+    email: emailLookup(req.session.user_ID, users)
   };
-  if (req.cookies['user_ID']) {
+  if (req.session.user_ID) {
     res.render("urls_show", templateVars);
   } else {
     res.render("please_log_in", templateVars);
@@ -147,10 +150,10 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   let templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL]['longURL'],
-    user_ID: req.cookies['user_ID'],
-    email: emailLookup(req.cookies['user_ID'], users)
+    user_ID: req.session.user_ID,
+    email: emailLookup(req.session.user_ID, users)
   };
-  if (req.cookies['user_ID']) {
+  if (req.session.user_ID) {
     delete urlDatabase[shortURL];
     res.redirect("/urls");
   } else {
@@ -163,8 +166,8 @@ app.post("/urls/:shortURL", (req, res) => {
   let templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL]['longURL'],
-    user_ID: req.cookies['user_ID'],
-    email: emailLookup(req.cookies['user_ID'], users)
+    user_ID: req.session.user_ID,
+    email: emailLookup(req.session.user_ID, users)
   };
   res.render("urls_show", templateVars);
 });
@@ -172,15 +175,15 @@ app.post("/urls/:shortURL", (req, res) => {
 // Submitting edited URL, redirect to index page with new long url
 app.post("/urls/:shortURL/edit", (req, res) => {
   let key = req.params.shortURL;
-  urlDatabase[key] = { longURL: req.body.edit, userID: req.cookies['user_ID'] };
+  urlDatabase[key] = { longURL: req.body.edit, userID: req.session.user_ID };
   res.redirect("/urls");
 });
 
 // login page
 app.get("/login", (req, res) => {
-  // let userID = req.cookies['user_ID'];
+  // let userID = req.session.user_ID;
   // let userEmail = emailLookup(userID, users)
-  let templateVars = { user_ID: req.cookies['user_ID'], email: emailLookup(req.cookies['user_ID'], users) };
+  let templateVars = { user_ID: req.session.user_ID, email: emailLookup(req.session.user_ID, users) };
   res.render("login", templateVars);
 })
 
@@ -202,7 +205,7 @@ app.post("/login", (req, res) => {
       } else {
         if (emailExists(req.body.email, users) &&
           passwordCorrect(req.body.email, req.body.password, users)) {
-          res.cookie("user_ID", userIDLookup(req.body.email, users));
+          req.session.user_ID = userIDLookup(req.body.email, users);
           res.redirect("/urls")
         }
       }
@@ -212,13 +215,13 @@ app.post("/login", (req, res) => {
 
 // logout
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_ID");
+  req.session = null;
   res.redirect("/urls");
 });
 
 // Registration page
 app.get("/register", (req, res) => {
-  let templateVars = { user_ID: req.cookies['user_ID'], email: emailLookup(req.cookies['user_ID'], users) };
+  let templateVars = { user_ID: req.session.user_ID, email: emailLookup(req.session.user_ID, users) };
   res.render("registration", templateVars);
 })
 
@@ -234,7 +237,7 @@ app.post("/register", (req, res) => {
     } else {
       const randomID = generateRandomString();
       users[randomID] = { id: randomID, email: req.body.email, password: bcrypt.hashSync(req.body.password, 10) };
-      res.cookie("user_ID", randomID);
+      req.session.user_ID = randomID;
       res.redirect("/urls")
     }
   }
