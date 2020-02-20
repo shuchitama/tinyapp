@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080;
 const cookies = require('cookie-parser');
 const bodyParser = require("body-parser");
+const bcrypt = require('bcrypt');
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookies());
@@ -17,18 +18,19 @@ const urlDatabase = {
   "yHq36q": { longURL: "https://developer.mozilla.org/en-US", userID: "user2RandomID" }
 };
 
-let users = {
-  "userRandomID": {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur"
-  },
-  "user2RandomID": {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk"
-  }
-}
+let users = {}
+// let users = {
+//   "userRandomID": {
+//     id: "userRandomID",
+//     email: "user@example.com",
+//     password: "purple-monkey-dinosaur"
+//   },
+//   "user2RandomID": {
+//     id: "user2RandomID",
+//     email: "user2@example.com",
+//     password: "dishwasher-funk"
+//   }
+// }
 // ----------------functions --------------------//
 const generateRandomString = function () {
   let result = '';
@@ -51,7 +53,8 @@ const emailExists = function (email, users) {
 
 const passwordCorrect = function (email, password, users) {
   for (const user in users) {
-    if (users[user]['email'] === email && users[user]['password'] === password) {
+    if (users[user]['email'] === email &&
+      bcrypt.compareSync(password, users[user]['password'])) {
       return true;
     }
   }
@@ -191,11 +194,14 @@ app.post("/login", (req, res) => {
       res.statusCode = 403;
       res.send("Email address not registered.");
     } else {
-      if (emailExists(req.body.email, users) && !passwordCorrect(req.body.email, req.body.password, users)) {
+      if (emailExists(req.body.email, users) &&
+        !passwordCorrect(req.body.email, req.body.password, users)) {
         res.statusCode = 403;
+        console.log(users)
         res.send("Incorrect password! Please try again.");
       } else {
-        if (emailExists(req.body.email, users) && passwordCorrect(req.body.email, req.body.password, users)) {
+        if (emailExists(req.body.email, users) &&
+          passwordCorrect(req.body.email, req.body.password, users)) {
           res.cookie("user_ID", userIDLookup(req.body.email, users));
           res.redirect("/urls")
         }
@@ -227,7 +233,7 @@ app.post("/register", (req, res) => {
       res.send("Please fill in both email and password to log in.")
     } else {
       const randomID = generateRandomString();
-      users[randomID] = { id: randomID, email: req.body.email, password: req.body.password };
+      users[randomID] = { id: randomID, email: req.body.email, password: bcrypt.hashSync(req.body.password, 10) };
       res.cookie("user_ID", randomID);
       res.redirect("/urls")
     }
