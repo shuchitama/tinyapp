@@ -7,17 +7,6 @@ app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookies());
 
-
-function generateRandomString() {
-  let result = '';
-  let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let charactersLength = characters.length;
-  for (let i = 0; i < 6; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
-}
-
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
@@ -28,7 +17,7 @@ const urlDatabase = {
   "yHq36q": "https://developer.mozilla.org/en-US"
 };
 
-const users = {
+let users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
@@ -41,15 +30,51 @@ const users = {
   }
 }
 
+const generateRandomString = function () {
+  let result = '';
+  let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let charactersLength = characters.length;
+  for (let i = 0; i < 6; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
+
+const emailExists = function (email, users) {
+  for (const user in users) {
+    if (users[user]['email'] === email) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const userIDLookup = function (email, users) {
+  for (const user in users) {
+    if (users[user]['email'] === email) {
+      return user;
+    }
+  }
+};
+
+const passwordCorrect = function (email, password, users) {
+  for (const user in users) {
+    if (users[user]['email'] === email && users[user]['password'] === password) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // Display all short and long URLs in a table with EDIT and DELETE options
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  let templateVars = { urls: urlDatabase, user_ID: req.cookies['user_ID'] };
   res.render("urls_index", templateVars);
 });
 
 // Display page that allows creation of new short URL
 app.get("/urls/new", (req, res) => {
-  let templateVars = { username: req.cookies["username"] };
+  let templateVars = { user_ID: req.cookies['user_ID'] };
   res.render("urls_new", templateVars);
 });
 
@@ -63,7 +88,7 @@ app.post("/urls", (req, res) => {
 
 // Displays page that shows short and long URL, with an Edit field
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"] };
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user_ID: req.cookies['user_ID'] };
   res.render("urls_show", templateVars);
 });
 
@@ -82,7 +107,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 // Pressing the "EDIT" button on index page -> redirects to edit page
 app.post("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"] };
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user_ID: req.cookies['user_ID'] };
   res.render("urls_show", templateVars);
 });
 
@@ -93,10 +118,33 @@ app.post("/urls/:shortURL/edit", (req, res) => {
   res.redirect("/urls");
 });
 
-// login
+// login page
+app.get("/login", (req, res) => {
+  let templateVars = { user_ID: req.cookies['user_ID'] };
+  res.render("login", templateVars);
+})
+
+// login form
 app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username);
-  res.redirect("/urls");
+  if (req.body.email === "" || req.body.password === "") {
+    res.statusCode = 400;
+    res.send("Please fill in both email and password to log in.");
+  } else {
+    if (!emailExists(req.body.email, users)) {
+      res.statusCode = 403;
+      res.send("Email address not registered.");
+    } else {
+      if (emailExists(req.body.email, users) && !passwordCorrect(req.body.email, req.body.password, users)) {
+        res.statusCode = 403;
+        res.send("Incorrect password! Please try again.");
+      } else {
+        if (emailExists(req.body.email, users) && passwordCorrect(req.body.email, req.body.password, users)) {
+          res.cookie("user_ID", userIDLookup(req.body.email, users));
+          res.redirect("/urls")
+        }
+      }
+    }
+  }
 });
 
 // logout
@@ -107,18 +155,27 @@ app.post("/logout", (req, res) => {
 
 // Registration page
 app.get("/register", (req, res) => {
-  let templateVars = { username: req.cookies["username"] };
+  let templateVars = { user_ID: req.cookies['user_ID'] };
   res.render("registration", templateVars);
 })
 
 // Handle new registations
 app.post("/register", (req, res) => {
-  const randomID = generateRandomString();
-  users[randomID] = { id: randomID, email: req.body.email, password: req.body.password };
-  res.cookie("username", randomID);
-  console.log(users);
-  res.redirect("/urls")
-})
+  if (emailExists(req.body.email, users)) {
+    res.statusCode = 400;
+    res.send("Email already exists!")
+  } else {
+    if (req.body.email === "" || req.body.password === "") {
+      res.statusCode = 400;
+      res.send("Please fill in both email and password to log in.")
+    } else {
+      const randomID = generateRandomString();
+      users[randomID] = { id: randomID, email: req.body.email, password: req.body.password };
+      res.cookie("user_ID", randomID);
+      res.redirect("/urls")
+    }
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);

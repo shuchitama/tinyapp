@@ -12,15 +12,23 @@
       </div>
     </div>
     <!-- <a class="nav-item nav-link" href="Error">Create New User -->
-    <% if (!username) { %>
-    <div>
+    <% if (!user_ID) { %>
+    <div class="navbar-nav">
+      <a class="nav-item nav-link" href="/login">Login</a>
+      <a class="nav-item nav-link" href="/register">Register</a>
+    </div>
+    <!-- <div>
       <form method="POST" action="/login">
-        <input type="text" name="username" placeholder="username">
         <button type="submit" class="btn btn-outline-dark btn-sm">Login</button>
       </form>
     </div>
+    <div>
+      <form method="POST" action="/register">
+        <button type="submit" class="btn btn-outline-dark btn-sm">Register</button>
+      </form>
+    </div> -->
     <% } else { %>
-    <a>Logged In As: <%= username %>! </a>
+    <a>Logged In As: <%= user_ID %>! </a>
     <form method="POST" action="/logout">
       <button type="submit" class="btn btn-outline-dark btn-sm">Logout</button>
     </form>
