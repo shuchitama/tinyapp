@@ -174,7 +174,7 @@ app.post("/login", (req, res) => {
 
 // logout
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("user_ID");
   res.redirect("/urls");
 });
 
