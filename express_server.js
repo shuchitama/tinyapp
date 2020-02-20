@@ -11,7 +11,7 @@ const
     passwordCorrect,
     userIDLookup,
     urlsForUser,
-    deleteShortURL } = require('./helpers')
+    deleteShortURL } = require('./helpers');
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -28,7 +28,7 @@ const urlDatabase = {
   'O7QJXg': { longURL: 'https://www.wikipedia.org', userID: 'YwEdhe' },
   '0fhTa2': { longURL: 'https://9gag.com', userID: 'YwEdhe' },
   'yHq36q': { longURL: 'https://developer.mozilla.org/en-US', userID: 'YwEdhe' }
-}
+};
 
 let users = {
   YwEdhe: {
@@ -42,7 +42,7 @@ let users = {
     email: 'user@example.com',
     password: '$2b$10$1.z2AV0HP5QBDu8a5LnBgOjg9Blw7Ia4BIOARzWDF.GhACooi77XO'
   }
-}
+};
 
 
 // Display all short and long URLs in a table with EDIT and DELETE options
@@ -72,8 +72,8 @@ app.get("/urls/new", (req, res) => {
 
 // creates a new short URL and redirects to page showing short and long URL
 app.post("/urls", (req, res) => {
-  shortURL = generateRandomString();
-  longURL = req.body.longURL;
+  let shortURL = generateRandomString();
+  let longURL = req.body.longURL;
   urlDatabase[shortURL] = { longURL, 'userID': req.session.user_ID };
   res.redirect(`/urls/${shortURL}`);
 });
@@ -111,7 +111,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     deleteShortURL(req.session.user_ID, req.params.shortURL, urlDatabase);
     res.redirect("/urls");
   } else {
-    res.render("please_log_in", templateVars)
+    res.render("please_log_in", templateVars);
   }
 });
 
@@ -137,7 +137,7 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 app.get("/login", (req, res) => {
   let templateVars = { user_ID: req.session.user_ID, email: emailLookup(req.session.user_ID, users) };
   res.render("login", templateVars);
-})
+});
 
 // login form
 app.post("/login", (req, res) => {
@@ -157,7 +157,7 @@ app.post("/login", (req, res) => {
         if (emailExists(req.body.email, users) &&
           passwordCorrect(req.body.email, req.body.password, users)) {
           req.session.user_ID = userIDLookup(req.body.email, users);
-          res.redirect("/urls")
+          res.redirect("/urls");
         }
       }
     }
@@ -174,22 +174,22 @@ app.post("/logout", (req, res) => {
 app.get("/register", (req, res) => {
   let templateVars = { user_ID: req.session.user_ID, email: emailLookup(req.session.user_ID, users) };
   res.render("registration", templateVars);
-})
+});
 
 // Handle new registations
 app.post("/register", (req, res) => {
   if (emailExists(req.body.email, users)) {
     res.statusCode = 400;
-    res.send("Email already exists!")
+    res.send("Email already exists!");
   } else {
     if (req.body.email === "" || req.body.password === "") {
       res.statusCode = 400;
-      res.send("Please fill in both email and password to log in.")
+      res.send("Please fill in both email and password to log in.");
     } else {
       const randomID = generateRandomString();
       users[randomID] = { id: randomID, email: req.body.email, password: bcrypt.hashSync(req.body.password, 10) };
       req.session.user_ID = randomID;
-      res.redirect("/urls")
+      res.redirect("/urls");
     }
   }
 });
