@@ -4,15 +4,15 @@ const PORT = 8080;
 const cookies = require('cookie-session');
 const bodyParser = require("body-parser");
 const bcrypt = require('bcrypt');
-const {
-  emailLookup,
-  generateRandomString,
-  emailExists,
-  passwordCorrect,
-  userIDLookup,
-  urlsForUser,
-  deleteShortURL
-} = require('./helpers')
+const
+  { emailLookup,
+    generateRandomString,
+    emailExists,
+    passwordCorrect,
+    userIDLookup,
+    urlsForUser,
+    deleteShortURL } = require('./helpers')
+
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookies({
