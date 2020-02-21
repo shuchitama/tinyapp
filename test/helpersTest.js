@@ -100,32 +100,3 @@ describe('urlsForUser', function () {
     assert.deepEqual(input, expectedOutput);
   });
 });
-// const deleteShortURL = function (user_ID, shortURL, urlDatabase)
-
-// describe('deleteShortURL', function () {
-//   it('should delete the database entry matching the given shortURL and the given user', function () {
-//     const input = deleteShortURL('userRandomID', 'b2xVn2', testDatabase)
-//     const expectedOutput = {
-//       'b2xVn2': { longURL: 'http://www.lighthouselabs.ca', userID: 'userRandomID' },
-//       '9sm5xK': { longURL: 'http://www.google.com', userID: 'userRandomID' },
-//       'GvswhG': { longURL: 'https://www.youtube.com', userID: 'userRandomID' }
-//     };
-//     assert.deepEqual(input, expectedOutput);
-//   });
-//   it('should delete the database entry matching the given shortURL and the given user', function () {
-//     const input = deleteShortURL('user2RandomID', testDatabase)
-//     const expectedOutput = {
-//       's7kg20': { longURL: 'http://www.lighthouselabs.ca', userID: 'user2RandomID' },
-//       'idFhed': { longURL: 'http://www.example.com', userID: 'user2RandomID' },
-//       'O7QJXg': { longURL: 'https://www.wikipedia.org', userID: 'user2RandomID' },
-//       '0fhTa2': { longURL: 'https://9gag.com', userID: 'user2RandomID' },
-//       'yHq36q': { longURL: 'https://developer.mozilla.org/en-US', userID: 'user2RandomID' }
-//     };
-//     assert.deepEqual(input, expectedOutput);
-//   });
-//   it('should return an empty object if no user with the given user ID was found', function () {
-//     const input = deleteShortURL('user3RandomID', testDatabase)
-//     const expectedOutput = {};
-//     assert.deepEqual(input, expectedOutput);
-//   });
-// });
