@@ -20,29 +20,8 @@ app.use(cookies({
   keys: ["nasdylksdfkaf"]
 }));
 
-const urlDatabase = {
-  'b2xVn2': { longURL: 'http://www.lighthouselabs.ca', userID: 'eNH4Ui' },
-  '9sm5xK': { longURL: 'http://www.google.com', userID: 'eNH4Ui' },
-  'idFhed': { longURL: 'http://www.example.com', userID: 'YwEdhe' },
-  'GvswhG': { longURL: 'https://www.youtube.com', userID: 'eNH4Ui' },
-  'O7QJXg': { longURL: 'https://www.wikipedia.org', userID: 'YwEdhe' },
-  '0fhTa2': { longURL: 'https://9gag.com', userID: 'YwEdhe' },
-  'yHq36q': { longURL: 'https://developer.mozilla.org/en-US', userID: 'YwEdhe' }
-};
-
-let users = {
-  YwEdhe: {
-    id: 'YwEdhe',
-    email: 'user2@example.com',
-    password: '$2b$10$xbJR6rB1Yycjv2bfwLuv5u4lcDGWdQ8W1wvZnRUo8ylNPMhTuva7e'
-  },
-
-  eNH4Ui: {
-    id: 'eNH4Ui',
-    email: 'user@example.com',
-    password: '$2b$10$1.z2AV0HP5QBDu8a5LnBgOjg9Blw7Ia4BIOARzWDF.GhACooi77XO'
-  }
-};
+let urlDatabase = {};
+let users = {};
 
 // Redirect to /url if a user is signed in, otherwise ask client to login or register
 app.get("/", (req, res) => {
