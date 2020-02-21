@@ -75,7 +75,7 @@ app.get("/urls", (req, res) => {
   }
 });
 
-// Display page that allows creation of new short URL if logged in
+// Displays page that allows creation of new short URL if logged in
 app.get("/urls/new", (req, res) => {
   let templateVars = { user_ID: req.session.user_ID, email: emailLookup(req.session.user_ID, users) };
   if (templateVars.user_ID) {
