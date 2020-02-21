@@ -44,6 +44,20 @@ let users = {
   }
 };
 
+// Redirect to /url if a user is signed in, otherwise ask client to login or register
+app.get("/", (req, res) => {
+  let templateVars = {
+    user_ID: req.session.user_ID,
+    urls: urlsForUser(req.session.user_ID, urlDatabase),
+    email: emailLookup(req.session.user_ID, users),
+    msg: "plsLogIn"
+  };
+  if (req.session.user_ID) {
+    res.render("urls_index", templateVars);
+  } else {
+    res.render("errorMsgs", templateVars);
+  }
+});
 
 // Display all short and long URLs in a table with EDIT and DELETE options
 // Only if a user is logged in, and only with the shortURL the user created
@@ -51,12 +65,13 @@ app.get("/urls", (req, res) => {
   let templateVars = {
     user_ID: req.session.user_ID,
     urls: urlsForUser(req.session.user_ID, urlDatabase),
-    email: emailLookup(req.session.user_ID, users)
+    email: emailLookup(req.session.user_ID, users),
+    msg: "plsLogIn"
   };
   if (req.session.user_ID) {
     res.render("urls_index", templateVars);
   } else {
-    res.render("please_log_in", templateVars);
+    res.render("errorMsgs", templateVars);
   }
 });
 
@@ -82,21 +97,43 @@ app.post("/urls", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   let templateVars = {
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL]['longURL'],
     user_ID: req.session.user_ID,
-    email: emailLookup(req.session.user_ID, users)
+    email: emailLookup(req.session.user_ID, users),
   };
-  if (req.session.user_ID) {
+  if (!req.session.user_ID) {
+    templateVars['msg'] = "plsLogIn";
+    res.render("errorMsgs", templateVars);
+    return;
+  }
+  if (!Object.keys(urlDatabase).includes(req.params.shortURL)) {
+    templateVars['msg'] = "noShortURL";
+    res.render("errorMsgs", templateVars);
+    return;
+  }
+  if (urlDatabase[req.params.shortURL]['userID'] === req.session.user_ID) {
+    templateVars['longURL'] = urlDatabase[req.params.shortURL]['longURL']
     res.render("urls_show", templateVars);
   } else {
-    res.render("please_log_in", templateVars);
+    templateVars['msg'] = "notYourURL";
+    res.render("errorMsgs", templateVars);
+    return;
   }
 });
 
 // Redirect to long URL by clicking on the short URL
 app.get(`/u/:shortURL`, (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL]['longURL'];
-  res.redirect(longURL);
+  let templateVars = {
+    shortURL: req.params.shortURL,
+    user_ID: req.session.user_ID,
+    email: emailLookup(req.session.user_ID, users),
+    msg: "noShortURL"
+  };
+  if (Object.keys(urlDatabase).includes(req.params.shortURL)) {
+    const longURL = urlDatabase[req.params.shortURL]['longURL'];
+    res.redirect(longURL);
+  } else {
+    res.render("errorMsgs", templateVars);
+  }
 });
 
 // Delete a short URL
@@ -105,13 +142,14 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL]['longURL'],
     user_ID: req.session.user_ID,
-    email: emailLookup(req.session.user_ID, users)
+    email: emailLookup(req.session.user_ID, users),
+    msg: "noShortURL"
   };
   if (req.session.user_ID) {
     deleteShortURL(req.session.user_ID, req.params.shortURL, urlDatabase);
     res.redirect("/urls");
   } else {
-    res.render("please_log_in", templateVars);
+    res.render("errorMsgs", templateVars);
   }
 });
 
@@ -135,32 +173,44 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 
 // login page
 app.get("/login", (req, res) => {
-  let templateVars = { user_ID: req.session.user_ID, email: emailLookup(req.session.user_ID, users) };
-  res.render("login", templateVars);
+  if (req.session.user_ID) {
+    res.redirect("/urls");
+  } else {
+    let templateVars = { user_ID: req.session.user_ID, email: emailLookup(req.session.user_ID, users) };
+    res.render("login", templateVars);
+  }
 });
 
 // login form
 app.post("/login", (req, res) => {
+  let templateVars = {
+    user_ID: req.session.user_ID,
+  };
   if (req.body.email === "" || req.body.password === "") {
     res.statusCode = 400;
-    res.send("Please fill in both email and password to log in.");
-  } else {
-    if (!emailExists(req.body.email, users)) {
-      res.statusCode = 403;
-      res.send("Email address not registered.");
-    } else {
-      if (emailExists(req.body.email, users) &&
-        !passwordCorrect(req.body.email, req.body.password, users)) {
-        res.statusCode = 403;
-        res.send("Incorrect password! Please try again.");
-      } else {
-        if (emailExists(req.body.email, users) &&
-          passwordCorrect(req.body.email, req.body.password, users)) {
-          req.session.user_ID = userIDLookup(req.body.email, users);
-          res.redirect("/urls");
-        }
-      }
-    }
+    templateVars['msg'] = "fillAllFields"
+    res.render("errorMsgs", templateVars);
+    return;
+  }
+  if (!emailExists(req.body.email, users)) {
+    res.statusCode = 403;
+    templateVars['msg'] = "noSuchEmail"
+    res.render("errorMsgs", templateVars);
+    return
+  }
+  if (emailExists(req.body.email, users) &&
+    !passwordCorrect(req.body.email, req.body.password, users)) {
+    res.statusCode = 403;
+    templateVars['msg'] = "wrongPassword"
+    res.render("errorMsgs", templateVars);
+    res.send("Incorrect password! Please try again.");
+    return;
+  }
+  if (emailExists(req.body.email, users) &&
+    passwordCorrect(req.body.email, req.body.password, users)) {
+    req.session.user_ID = userIDLookup(req.body.email, users);
+    res.redirect("/urls");
+    return;
   }
 });
 
@@ -172,25 +222,36 @@ app.post("/logout", (req, res) => {
 
 // Registration page
 app.get("/register", (req, res) => {
-  let templateVars = { user_ID: req.session.user_ID, email: emailLookup(req.session.user_ID, users) };
-  res.render("registration", templateVars);
+  if (req.session.user_ID) {
+    res.redirect("/urls");
+  } else {
+    let templateVars = { user_ID: req.session.user_ID, email: emailLookup(req.session.user_ID, users) };
+    res.render("registration", templateVars);
+  }
 });
 
 // Handle new registations
 app.post("/register", (req, res) => {
+  let templateVars = {
+    user_ID: req.session.user_ID,
+    email: emailLookup(req.session.user_ID, users),
+  };
   if (emailExists(req.body.email, users)) {
     res.statusCode = 400;
-    res.send("Email already exists!");
+    templateVars['msg'] = "emailExists"
+    res.render("errorMsgs", templateVars);
+    return;
+  }
+  if (req.body.email === "" || req.body.password === "") {
+    res.statusCode = 400;
+    templateVars['msg'] = "fillAllFields"
+    res.render("errorMsgs", templateVars);
+    return;
   } else {
-    if (req.body.email === "" || req.body.password === "") {
-      res.statusCode = 400;
-      res.send("Please fill in both email and password to log in.");
-    } else {
-      const randomID = generateRandomString();
-      users[randomID] = { id: randomID, email: req.body.email, password: bcrypt.hashSync(req.body.password, 10) };
-      req.session.user_ID = randomID;
-      res.redirect("/urls");
-    }
+    const randomID = generateRandomString();
+    users[randomID] = { id: randomID, email: req.body.email, password: bcrypt.hashSync(req.body.password, 10) };
+    req.session.user_ID = randomID;
+    res.redirect("/urls");
   }
 });
 

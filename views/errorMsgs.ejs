@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+    integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+  <title>TinyApp</title>
+</head>
+
+<body>
+  <%- include ('partials/_header.ejs') %>
+  <main style="margin: 1em;">
+    <% if (msg === "plsLogIn") { %>
+    <h3>Please log in or register to continue.</h3>
+    <% } else %>
+    <% if (msg === "noShortURL") { %>
+    <h3>The tiny URL "<%= shortURL %>" does not exist!</h3>
+    <% } %>
+    <% if (msg === "notYourURL") { %>
+    <h3>Ah ah ah!</h3>
+    <IMG SRC="https://media.giphy.com/media/5ftsmLIqktHQA/giphy.gif">
+    <h3>This tiny URL does not belong to you!</h3>
+    <% } %>
+    <% if (msg === "fillAllFields") { %>
+    <h3>Please fill in both email and password to continue.</h3>
+    <% } %>
+    <% if (msg === "noSuchEmail") { %>
+    <h3>This email address is not registered.</h3>
+    <% } %>
+    <% if (msg === "wrongPassword") { %>
+    <h3>Incorrect password! Please try again.</h3>
+    <% } %>
+    <% if (msg === "emailExists") { %>
+    <h3>This email is already registered!</h3>
+    <% } %>
+</body>
